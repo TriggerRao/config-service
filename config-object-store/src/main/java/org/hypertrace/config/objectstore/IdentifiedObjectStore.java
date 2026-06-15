@@ -82,6 +82,10 @@ public abstract class IdentifiedObjectStore<T> {
     return this.buildValueFromData(data);
   }
 
+  protected Optional<Value> getDefaultPreviousValue(RequestContext requestContext, T data) {
+    return Optional.empty();
+  }
+
   protected String buildClassNameForChangeEvent(T data) {
     return data.getClass().getName();
   }
@@ -279,7 +283,13 @@ public abstract class IdentifiedObjectStore<T> {
           if (response.hasPrevConfig()) {
             tryReportUpdate(requestContext, result, response.getPrevConfig());
           } else {
-            tryReportCreation(requestContext, result);
+            Optional<Value> defaultPrev =
+                getDefaultPreviousValue(requestContext, result.getData());
+            if (defaultPrev.isPresent()) {
+              tryReportUpdate(requestContext, result, defaultPrev.get());
+            } else {
+              tryReportCreation(requestContext, result);
+            }
           }
         });
     return optionalResult;
