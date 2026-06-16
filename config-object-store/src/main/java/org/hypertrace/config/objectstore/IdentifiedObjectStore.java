@@ -283,8 +283,7 @@ public abstract class IdentifiedObjectStore<T> {
           if (response.hasPrevConfig()) {
             tryReportUpdate(requestContext, result, response.getPrevConfig());
           } else {
-            Optional<Value> defaultPrev =
-                getDefaultPreviousValue(requestContext, result.getData());
+            Optional<Value> defaultPrev = getDefaultPreviousValue(requestContext, result.getData());
             if (defaultPrev.isPresent()) {
               tryReportUpdate(requestContext, result, defaultPrev.get());
             } else {
