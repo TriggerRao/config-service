@@ -316,6 +316,10 @@ public abstract class IdentifiedObjectStore<T> {
     DeletedContextualConfigObject<T> deletedContextualConfigObject =
         DeletedContextualConfigObjectImpl.tryBuild(deletedConfig, this::buildDataFromValue);
 
+    if (requestContext.isUserTrackingSuppressed()) {
+      return deletedContextualConfigObject;
+    }
+
     if (deletedContextualConfigObject.getDeletedData().isPresent()) {
       T data = deletedContextualConfigObject.getDeletedData().get();
       configChangeEventGeneratorOptional.ifPresent(
@@ -330,6 +334,9 @@ public abstract class IdentifiedObjectStore<T> {
   }
 
   private void tryReportCreation(RequestContext requestContext, ContextualConfigObject<T> result) {
+    if (requestContext.isUserTrackingSuppressed()) {
+      return;
+    }
     configChangeEventGeneratorOptional.ifPresent(
         configChangeEventGenerator ->
             configChangeEventGenerator.sendCreateNotification(
@@ -341,6 +348,9 @@ public abstract class IdentifiedObjectStore<T> {
 
   private void tryReportUpdate(
       RequestContext requestContext, ContextualConfigObject<T> result, Value previousValue) {
+    if (requestContext.isUserTrackingSuppressed()) {
+      return;
+    }
     configChangeEventGeneratorOptional.ifPresent(
         configChangeEventGenerator ->
             configChangeEventGenerator.sendUpdateNotification(
