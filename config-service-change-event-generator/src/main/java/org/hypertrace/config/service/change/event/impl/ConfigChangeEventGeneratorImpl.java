@@ -57,7 +57,7 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
   @Override
   public void sendCreateNotification(
       RequestContext requestContext, String configType, Value config) {
-    produceCreateNotification(requestContext, configType, Optional.empty(), config);
+    produceCreateNotification(requestContext, configType, Optional.empty(), config, Optional.empty());
   }
 
   @Override
@@ -76,7 +76,7 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
   @Override
   public void sendCreateNotification(
       RequestContext requestContext, String configType, String context, Value config) {
-    produceCreateNotification(requestContext, configType, Optional.of(context), config);
+    produceCreateNotification(requestContext, configType, Optional.of(context), config, Optional.empty());
   }
 
   @Override
@@ -116,14 +116,6 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
       Optional<Value> defaultConfig) {
     produceUpdateNotification(
         requestContext, configType, Optional.of(context), prevConfig, latestConfig, defaultConfig);
-  }
-
-  private void produceCreateNotification(
-      RequestContext requestContext,
-      String configType,
-      Optional<String> contextOptional,
-      Value config) {
-    produceCreateNotification(requestContext, configType, contextOptional, config, Optional.empty());
   }
 
   private void produceCreateNotification(
