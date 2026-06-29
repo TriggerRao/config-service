@@ -70,7 +70,7 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
   public void sendUpdateNotification(
       RequestContext requestContext, String configType, Value prevConfig, Value latestConfig) {
     produceUpdateNotification(
-        requestContext, configType, Optional.empty(), prevConfig, latestConfig);
+        requestContext, configType, Optional.empty(), prevConfig, latestConfig, Optional.empty());
   }
 
   @Override
@@ -93,7 +93,29 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
       Value prevConfig,
       Value latestConfig) {
     produceUpdateNotification(
-        requestContext, configType, Optional.of(context), prevConfig, latestConfig);
+        requestContext, configType, Optional.of(context), prevConfig, latestConfig, Optional.empty());
+  }
+
+  @Override
+  public void sendCreateNotification(
+      RequestContext requestContext,
+      String configType,
+      String context,
+      Value config,
+      Optional<Value> defaultConfig) {
+    produceCreateNotification(requestContext, configType, Optional.of(context), config, defaultConfig);
+  }
+
+  @Override
+  public void sendUpdateNotification(
+      RequestContext requestContext,
+      String configType,
+      String context,
+      Value prevConfig,
+      Value latestConfig,
+      Optional<Value> defaultConfig) {
+    produceUpdateNotification(
+        requestContext, configType, Optional.of(context), prevConfig, latestConfig, defaultConfig);
   }
 
   private void produceCreateNotification(
@@ -101,6 +123,15 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
       String configType,
       Optional<String> contextOptional,
       Value config) {
+    produceCreateNotification(requestContext, configType, contextOptional, config, Optional.empty());
+  }
+
+  private void produceCreateNotification(
+      RequestContext requestContext,
+      String configType,
+      Optional<String> contextOptional,
+      Value config,
+      Optional<Value> defaultConfig) {
     String tenantId = requestContext.getTenantId().get();
     try {
       Builder builder = ConfigChangeEventValue.newBuilder();
@@ -110,6 +141,7 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
               .build());
       builder.setEventTimeMillis(clock.millis());
       populateUserDetails(requestContext, builder);
+      setDefaultConfigJson(builder, defaultConfig);
       configChangeEventProducer.send(
           KeyUtil.getKey(tenantId, configType, contextOptional), builder.build());
     } catch (Exception ex) {
@@ -127,7 +159,8 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
       String configType,
       Optional<String> contextOptional,
       Value prevConfig,
-      Value latestConfig) {
+      Value latestConfig,
+      Optional<Value> defaultConfig) {
     String tenantId = requestContext.getTenantId().get();
     try {
       Builder builder = ConfigChangeEventValue.newBuilder();
@@ -138,6 +171,7 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
               .build());
       builder.setEventTimeMillis(clock.millis());
       populateUserDetails(requestContext, builder);
+      setDefaultConfigJson(builder, defaultConfig);
       configChangeEventProducer.send(
           KeyUtil.getKey(tenantId, configType, contextOptional), builder.build());
     } catch (Exception ex) {
@@ -174,6 +208,17 @@ public class ConfigChangeEventGeneratorImpl implements ConfigChangeEventGenerato
           contextOptional,
           ex);
     }
+  }
+
+  private void setDefaultConfigJson(Builder builder, Optional<Value> defaultConfig) {
+    defaultConfig.ifPresent(
+        value -> {
+          try {
+            builder.setDefaultConfigJson(ConfigProtoConverter.convertToJsonString(value));
+          } catch (Exception ex) {
+            log.warn("Unable to convert default config to JSON for change event", ex);
+          }
+        });
   }
 
   private void populateUserDetails(RequestContext requestContext, Builder builder) {

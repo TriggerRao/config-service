@@ -90,6 +90,10 @@ public abstract class IdentifiedObjectStore<T> {
     return data.getClass().getName();
   }
 
+  protected Optional<Value> getDefaultConfigValue(RequestContext requestContext, T data) {
+    return Optional.empty();
+  }
+
   protected List<ContextualConfigObject<T>> orderFetchedObjects(
       List<ContextualConfigObject<T>> objects) {
     return objects;
@@ -342,7 +346,8 @@ public abstract class IdentifiedObjectStore<T> {
                 requestContext,
                 this.buildClassNameForChangeEvent(result.getData()),
                 result.getContext(),
-                this.buildValueForChangeEvent(result.getData())));
+                this.buildValueForChangeEvent(result.getData()),
+                getDefaultConfigValue(requestContext, result.getData())));
   }
 
   private void tryReportUpdate(
@@ -365,7 +370,8 @@ public abstract class IdentifiedObjectStore<T> {
                               previousValue);
                           return previousValue;
                         }),
-                this.buildValueForChangeEvent(result.getData())));
+                this.buildValueForChangeEvent(result.getData()),
+                getDefaultConfigValue(requestContext, result.getData())));
   }
 
   protected Deadline getDeadline() {
